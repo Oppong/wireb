@@ -3,6 +3,7 @@
 namespace App\Http\Livewire;
 
 use App\Models\Transaction;
+use Carbon\Carbon;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -16,6 +17,7 @@ class Dashboard extends Component
     public $showModalEdit = false;
     public $showNew = false;
     public $showFilters = false;
+    public $selected = [];
 
     public Transaction $editing;
 
@@ -48,33 +50,17 @@ class Dashboard extends Component
     public function render()
     {
 
-        // sleep(2);
-        //searching the simple way
-        $transaction = Transaction::query()
-            ->where('title', 'like', '%' . $this->search . '%')
-            ->orWhere('amount', 'like', '%' . $this->search . '%')
-            ->orderBy($this->sortField, $this->sortDirection)
-            ->paginate(20);
 
-        //searching the advanced way method one
-        $transactionss = Transaction::query()
-            ->when($this->filters['status'], function ($query) {
-                $query->where('status', $this->filters['status']);
-            })
-            ->where('title', 'like', '%' . $this->search . '%')
-            ->orderBy($this->sortField, $this->sortDirection)
-            ->paginate(20);
-
-            //method two when searching
+        //method three making it more awesome
         $transactions = Transaction::query()
-            ->when($this->filters['status'], function ($query, $status) {
-                $query->where('status', $status);
-            })
+            ->when($this->filters['status'], fn ($query, $status) =>$query->where('status', $status))
+            ->when($this->filters['amount-min'], fn ($query, $amount) =>$query->where('amount', '>=', $amount))
+            ->when($this->filters['amount-max'], fn ($query, $amount) =>$query->where('amount', '<=', $amount))
+            ->when($this->filters['date-min'], fn ($query, $date) =>$query->where('dated', '>=', Carbon::parse($date)))
+            ->when($this->filters['date-max'], fn ($query, $date) =>$query->where('dated', '<=', Carbon::parse($date)))
             ->where('title', 'like', '%' . $this->search . '%')
             ->orderBy($this->sortField, $this->sortDirection)
             ->paginate(20);
-
-
 
 
 
@@ -131,7 +117,43 @@ class Dashboard extends Component
     {
         $this->reset('filters');
     }
+
+
+    public function updatedSearch()
+    {
+        $this->resetPage();
+    }
+
+    //bulk exports
+
+    public function exportSelected(){
+
+        return response()->streamDownload(function(){
+
+            //used a macro for the csv
+            echo Transaction::whereKey($this->selected)->toCsv();
+
+        }, 'transactions.csv');
+    }
+
+
+    //bulk deletes
+    public function deleteSelected(){
+
+        $transactions = Transaction::whereKey($this->selected);
+       $deleted = $transactions->delete();
+
+
+       if($deleted){
+        session()->flash('message', 'selected transactions deleted successfully');
+       }else{
+
+       }
+
+    }
 }
+
+
 
 
 

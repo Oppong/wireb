@@ -16,6 +16,35 @@
                 </div>
 
                 <div>
+                    @if (session()->has('message'))
+                     <p>{{session('message')}}</p>
+                    @endif
+                </div>
+
+
+                <div class="flex items-center space-x-3">
+
+                    <x-dropdown class="px-2 py-2 bg-black">
+                        <x-slot name="trigger" >
+                            <div class="flex items-center cursor-pointer">
+                                <span>Bulk Action</span>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" >
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                                  </svg>
+                            </div>
+                        </x-slot>
+
+                        <x-slot name="content">
+                            <x-dropdown-link type="button" wire:click="exportSelected">
+                                Export
+                            </x-dropdown-link>
+                            <x-dropdown-link type="button"  wire:click="deleteSelected">
+                                Delete
+                            </x-dropdown-link>
+                        </x-slot>
+
+                    </x-dropdown>
+
                     <x-primary-button class="flex items-center text-center bg-indigo-700 hover:bg-indigo-800"
                         wire:click="create">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24"
@@ -67,10 +96,13 @@
                 {{-- @endif --}}
             </div>
 
-
+@json($selected)
             <table class="w-full text-sm text-left text-gray-500 border rounded shadow dark:text-gray-400">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                     <tr>
+                        <th>
+                            <input type="checkbox" name="" id="" class="ml-2 text-gray-100">
+                        </th>
                         <th scope="col" class="px-6 py-3" wire:click="sortBy('title')">
                             Title
                         </th>
@@ -91,7 +123,10 @@
                 <tbody>
                     @forelse ($transactions as $transaction)
                         <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700"
-                            wire:loading.class="opacity-70">
+                            wire:loading.class="opacity-70" wire:key="{{$transaction->id}}">
+                            <th>
+                                <input type="checkbox" wire:model="selected" value="{{$transaction->id}}" name="" id="" class="ml-2 bg-gray-100">
+                            </th>
                             <th scope="row"
                                 class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
                                 {{ $transaction->title }}
